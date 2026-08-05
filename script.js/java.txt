@@ -1,0 +1,124 @@
+// بنية الأسئلة (مقسمة لغويًا وحسب صعوبة المرحلة)
+const questionsData = {
+    ar: {
+        stage1: [ // سهل
+            { q: "ما هي عاصمة المملكة العربية السعودية؟", img: "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=500", options: ["الرياض", "جدة", "الدمام", "مكة"], correct: 0 },
+            { q: "كم عدد أركان الإسلام؟", img: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=500", options: ["5", "6", "4", "3"], correct: 0 }
+        ],
+        stage2: [ // متوسط
+            { q: "في أي عام كانت غزوة بدر الكبرى؟", img: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=500", options: ["2 هـ", "3 هـ", "5 هـ", "1 هـ"], correct: 0 }
+        ],
+        stage3: [ // أصعب شوية
+            { q: "من هو منتخب كرة القدم الفائز بكأس العالم 1982؟", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500", options: ["إيطاليا", "البرازيل", "ألمانيا", "الأرجنتين"], correct: 0 }
+        ],
+        stage4: [ // صعب جداً
+            { q: "ما هي أصغر دولة في العالم من حيث المساحة؟", img: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=500", options: ["الفاتيكان", "موناكو", "ناورو", "سان مارينو"], correct: 0 }
+        ]
+    },
+    en: {
+        stage1: [
+            { q: "What is the capital of Saudi Arabia?", img: "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=500", options: ["Riyadh", "Jeddah", "Dammam", "Makkah"], correct: 0 }
+        ],
+        stage2: [
+            { q: "Which planet is known as the Red Planet?", img: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=500", options: ["Mars", "Venus", "Jupiter", "Saturn"], correct: 0 }
+        ],
+        stage3: [
+            { q: "Who won the 1982 FIFA World Cup?", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500", options: ["Italy", "Brazil", "Germany", "Argentina"], correct: 0 }
+        ],
+        stage4: [
+            { q: "What is the smallest country in the world?", img: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=500", options: ["Vatican City", "Monaco", "Nauru", "San Marino"], correct: 0 }
+        ]
+    }
+};
+
+let lang = 'ar';
+let stage = 1;
+let score = 0;
+let timeLeft = 40;
+let timerId = null;
+
+function initGame() {
+    stage = 1;
+    score = 0;
+    document.getElementById('scoreNum').innerText = score;
+    nextQuestion();
+}
+
+function startTimer() {
+    clearInterval(timerId);
+    timeLeft = 40;
+    document.getElementById('timer').innerText = `⏱️ ${timeLeft}`;
+    timerId = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerText = `⏱️ ${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(timerId);
+            alert(lang === 'ar' ? "انتهى الوقت! خسرت المحاولة." : "Time's up! Game over.");
+            initGame();
+        }
+    }, 1000);
+}
+
+function nextQuestion() {
+    if (stage > 4) {
+        clearInterval(timerId);
+        alert(lang === 'ar' ? `🎉 مبروك! ختمت اللعبة بنجاح! النقاط: ${score}` : `🎉 Congrats! You beat the game! Score: ${score}`);
+        initGame();
+        return;
+    }
+
+    document.getElementById('stageNum').innerText = stage;
+    startTimer();
+
+    const pool = questionsData[lang][`stage${stage}`];
+    const q = pool[Math.floor(Math.random() * pool.length)];
+
+    document.getElementById('qTitle').innerText = q.q;
+    document.getElementById('qImage').src = q.img;
+
+    const grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (idx === q.correct) {
+                score += stage * 25;
+                document.getElementById('scoreNum').innerText = score;
+                stage++;
+                nextQuestion();
+            } else {
+                clearInterval(timerId);
+                alert(lang === 'ar' ? "إجابة خاطئة! ستبدأ من جديد." : "Wrong answer! Restarting...");
+                initGame();
+            }
+        };
+        grid.appendChild(btn);
+    });
+}
+
+function changeLanguage() {
+    lang = document.getElementById('langSelect').value;
+    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.getElementById('stageTxt').innerText = lang === 'ar' ? 'المرحلة:' : 'Stage:';
+    document.getElementById('scoreTxt').innerText = lang === 'ar' ? 'النقاط:' : 'Score:';
+    initGame();
+}
+
+function shareGame() {
+    const msg = encodeURIComponent("العب معي الآن في لعبة تحديات مازن وتحدى معلوماتك! 🔥");
+    window.open(`https://api.whatsapp.com/send?text=${msg}%20${window.location.href}`, '_blank');
+}
+
+function createMultiplayerRoom() {
+    const peer = new Peer();
+    peer.on('open', (id) => {
+        const inviteUrl = `${window.location.href}?room=${id}`;
+        navigator.clipboard.writeText(inviteUrl);
+        alert(lang === 'ar' ? "تم نسخ رابط الدعوة! أرسله لصديقك للعب معك." : "Invite link copied to clipboard!");
+    });
+}
+
+// بدء التشغيل عند الفتح
+initGame();
